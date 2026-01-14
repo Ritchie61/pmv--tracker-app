@@ -13,7 +13,8 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  late MaplibreMapController mapController;
+  // FIXED: Updated to new class name (MapLibreMapController)
+  late MapLibreMapController mapController;
   final SupabaseClient _dbClient = SupabaseClient();
   String _selectedRoute = AppConstants.commonRoutes.first;
   String _selectedStatus = 'waiting'; // Default status
@@ -21,8 +22,8 @@ class _MapScreenState extends State<MapScreen> {
   bool _isLoading = true;
   final Map<String, Symbol> _markers = {};
 
-  // Called when the map is fully loaded
-  void _onMapCreated(MaplibreMapController controller) {
+  // FIXED: Updated parameter type to MapLibreMapController
+  void _onMapCreated(MapLibreMapController controller) {
     mapController = controller;
     // Start listening to live reports and center map on user
     _setupLiveReports();
@@ -119,9 +120,11 @@ class _MapScreenState extends State<MapScreen> {
         return;
       }
 
-      // Get current position
+      // FIXED: Updated to use the new `settings` parameter instead of `desiredAccuracy`
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.best,
+        settings: const LocationSettings(
+          accuracy: LocationAccuracy.best,
+        ),
       );
 
       // Animate camera to user's location
@@ -149,9 +152,11 @@ class _MapScreenState extends State<MapScreen> {
   // Submit a new PMV report
   Future<void> _submitReport() async {
     try {
-      // Get current position with updated geolocator API
+      // FIXED: Updated to use the new `settings` parameter
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.medium,
+        settings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+        ),
       );
 
       final newReport = PmvReport(
@@ -214,8 +219,8 @@ class _MapScreenState extends State<MapScreen> {
       ),
       body: Stack(
         children: [
-          // The Interactive Map
-          MaplibreMap(
+          // FIXED: Updated widget name to MapLibreMap
+          MapLibreMap(
             onMapCreated: _onMapCreated,
             initialCameraPosition: const CameraPosition(
               target: LatLng(
@@ -226,7 +231,8 @@ class _MapScreenState extends State<MapScreen> {
             ),
             styleString: AppConstants.mapStyleUrl,
             myLocationEnabled: true,
-            myLocationTrackingMode: MyLocationTrackingMode.TrackingGps,
+            // CRITICAL FIX: Changed from 'TrackingGps' to 'Tracking'
+            myLocationTrackingMode: MyLocationTrackingMode.Tracking,
           ),
 
           // Loading indicator
@@ -263,7 +269,8 @@ class _MapScreenState extends State<MapScreen> {
                     const Text('Select Route:'),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      value: _selectedRoute,
+                      // FIXED: Changed deprecated 'value' to 'initialValue'
+                      initialValue: _selectedRoute,
                       items: AppConstants.commonRoutes
                           .map((route) => DropdownMenuItem(
                                 value: route,
