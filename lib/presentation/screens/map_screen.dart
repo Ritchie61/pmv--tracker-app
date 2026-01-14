@@ -226,7 +226,7 @@ class _MapScreenState extends State<MapScreen> {
             ),
             styleString: AppConstants.mapStyleUrl,
             myLocationEnabled: true,
-            myLocationTrackingMode: MyLocationTrackingMode.TrackingGPS,
+            myLocationTrackingMode: MyLocationTrackingMode.TrackingGps,
           ),
 
           // Loading indicator
