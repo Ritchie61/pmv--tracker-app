@@ -13,24 +13,20 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  // FIXED: Updated to new class name (MapLibreMapController)
   late MapLibreMapController mapController;
   final SupabaseClient _dbClient = SupabaseClient();
   String _selectedRoute = AppConstants.commonRoutes.first;
-  String _selectedStatus = 'waiting'; // Default status
+  String _selectedStatus = 'waiting';
   List<PmvReport> _reports = [];
   bool _isLoading = true;
   final Map<String, Symbol> _markers = {};
 
-  // FIXED: Updated parameter type to MapLibreMapController
   void _onMapCreated(MapLibreMapController controller) {
     mapController = controller;
-    // Start listening to live reports and center map on user
     _setupLiveReports();
     _centerMapOnUser();
   }
 
-  // Set up real-time stream of PMV reports from Supabase
   void _setupLiveReports() {
     _dbClient.getLiveReports().listen((List<PmvReport> reports) {
       if (mounted) {
@@ -43,19 +39,15 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
-  // Add/update markers on the map based on current reports
   void _updateMapMarkers() {
-    // Create a set of current report IDs for easy lookup
     final currentReportIds = _reports.map((r) => r.id.toString()).toSet();
     
-    // Remove markers that are no longer in the reports
     final keysToRemove = _markers.keys.where((key) => !currentReportIds.contains(key)).toList();
     for (final key in keysToRemove) {
       mapController.removeSymbol(_markers[key]!);
       _markers.remove(key);
     }
     
-    // Add new markers for reports that don't have a marker yet
     for (final report in _reports) {
       final reportId = report.id.toString();
       if (!_markers.containsKey(reportId)) {
@@ -67,7 +59,6 @@ class _MapScreenState extends State<MapScreen> {
           textOffset: const Offset(0, 2),
         );
         
-        // Store the symbol with its ID for later removal
         mapController.addSymbol(symbolOptions).then((symbol) {
           if (mounted) {
             setState(() {
@@ -79,7 +70,6 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  // Get appropriate icon based on PMV status
   String _getIconForStatus(String status) {
     switch (status) {
       case 'onboard':
@@ -92,17 +82,14 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  // Get user's location and center the map (UPDATED for geolocator ^14.0.2)
   Future<void> _centerMapOnUser() async {
     try {
-      // Check if location service is enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         _showLocationError('Location services are disabled. Please enable them in your device settings.');
         return;
       }
 
-      // Check and request location permissions (UPDATED API for v14)
       LocationPermission permission = await Geolocator.checkPermission();
       
       if (permission == LocationPermission.denied) {
@@ -120,12 +107,12 @@ class _MapScreenState extends State<MapScreen> {
         return;
       }
 
-      // CRITICAL FIX: Reverted to 'desiredAccuracy' as 'settings' parameter is not available
+      // Keep deprecated method to ensure compatibility. Ignore analyzer warning.
+      // ignore: deprecated_member_use
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.best,
       );
 
-      // Animate camera to user's location
       mapController.animateCamera(
         CameraUpdate.newLatLngZoom(
           LatLng(position.latitude, position.longitude),
@@ -133,7 +120,6 @@ class _MapScreenState extends State<MapScreen> {
         ),
       );
     } catch (e) {
-      // Fallback to Port Moresby center
       _showLocationError('Could not get your location: ${e.toString()}');
       mapController.animateCamera(
         CameraUpdate.newLatLngZoom(
@@ -147,10 +133,10 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  // Submit a new PMV report
   Future<void> _submitReport() async {
     try {
-      // CRITICAL FIX: Reverted to 'desiredAccuracy' as 'settings' parameter is not available
+      // Keep deprecated method to ensure compatibility. Ignore analyzer warning.
+      // ignore: deprecated_member_use
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.medium,
       );
@@ -186,7 +172,6 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  // Show location error message
   void _showLocationError(String message) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -215,7 +200,7 @@ class _MapScreenState extends State<MapScreen> {
       ),
       body: Stack(
         children: [
-          // FIXED: Updated widget name to MapLibreMap
+          // CRITICAL FIX: Removed the undefined 'myLocationTrackingMode' parameter entirely
           MapLibreMap(
             onMapCreated: _onMapCreated,
             initialCameraPosition: const CameraPosition(
@@ -227,17 +212,13 @@ class _MapScreenState extends State<MapScreen> {
             ),
             styleString: AppConstants.mapStyleUrl,
             myLocationEnabled: true,
-            // CRITICAL FIX: Changed to 'None' as 'Tracking' and 'TrackingCompass' might not exist
-            myLocationTrackingMode: MyLocationTrackingMode.None,
           ),
 
-          // Loading indicator
           if (_isLoading)
             const Center(
               child: CircularProgressIndicator(),
             ),
 
-          // Reporting Controls (positioned at the bottom)
           Positioned(
             bottom: 20,
             left: 16,
@@ -260,12 +241,9 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    // Route Selection
                     const Text('Select Route:'),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      // FIXED: Changed deprecated 'value' to 'initialValue'
                       initialValue: _selectedRoute,
                       items: AppConstants.commonRoutes
                           .map((route) => DropdownMenuItem(
@@ -289,8 +267,6 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    // Status Selection
                     const Text('Status:'),
                     const SizedBox(height: 8),
                     SingleChildScrollView(
@@ -306,8 +282,6 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // Submit Button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -333,7 +307,6 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
 
-          // Active reports counter
           Positioned(
             top: 80,
             right: 16,
@@ -367,8 +340,6 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ],
       ),
-
-      // Button to re-center map on user
       floatingActionButton: FloatingActionButton(
         onPressed: _centerMapOnUser,
         backgroundColor: Colors.blue[800],
@@ -378,10 +349,8 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  // Helper to build a status selection chip
   Widget _buildStatusChip(String value, String label, Color color) {
     final isSelected = _selectedStatus == value;
-
     return ChoiceChip(
       label: Text(
         label,
