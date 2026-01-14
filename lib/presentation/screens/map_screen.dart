@@ -120,11 +120,9 @@ class _MapScreenState extends State<MapScreen> {
         return;
       }
 
-      // FIXED: Updated to use the new `settings` parameter instead of `desiredAccuracy`
+      // CRITICAL FIX: Reverted to 'desiredAccuracy' as 'settings' parameter is not available
       Position position = await Geolocator.getCurrentPosition(
-        settings: const LocationSettings(
-          accuracy: LocationAccuracy.best,
-        ),
+        desiredAccuracy: LocationAccuracy.best,
       );
 
       // Animate camera to user's location
@@ -152,11 +150,9 @@ class _MapScreenState extends State<MapScreen> {
   // Submit a new PMV report
   Future<void> _submitReport() async {
     try {
-      // FIXED: Updated to use the new `settings` parameter
+      // CRITICAL FIX: Reverted to 'desiredAccuracy' as 'settings' parameter is not available
       Position position = await Geolocator.getCurrentPosition(
-        settings: const LocationSettings(
-          accuracy: LocationAccuracy.medium,
-        ),
+        desiredAccuracy: LocationAccuracy.medium,
       );
 
       final newReport = PmvReport(
@@ -231,8 +227,8 @@ class _MapScreenState extends State<MapScreen> {
             ),
             styleString: AppConstants.mapStyleUrl,
             myLocationEnabled: true,
-            // CRITICAL FIX: Changed from 'TrackingGps' to 'Tracking'
-            myLocationTrackingMode: MyLocationTrackingMode.Tracking,
+            // CRITICAL FIX: Changed to 'None' as 'Tracking' and 'TrackingCompass' might not exist
+            myLocationTrackingMode: MyLocationTrackingMode.None,
           ),
 
           // Loading indicator
